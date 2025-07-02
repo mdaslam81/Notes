@@ -1,0 +1,15 @@
+Subject: Q: Drive Space Consumption Update – Action Needed by July 23/24
+
+Hi [Recipient's Name],
+
+Based on the job history of DBA_CheckDriveSpace, the CreditDataMart database is currently consuming an average of 37GB of space per day.
+
+As of this morning, the available space on the Q: drive is as follows:
+
+07/02 – 917.44 GB
+
+07/01 – 953.57 GB
+
+06/30 – 990.69 GB
+
+At the current rate of growth, we estimate that the available space will reach around 300GB by July 23 or 24. Please plan accordingly, as additional space or cleanup may be required before then to avoid any service disruptions.
