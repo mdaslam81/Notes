@@ -1,0 +1,8 @@
+Step1 :Offline the CreditDataMart DB 
+           ALTER DATABASE CREDITDATAMART SET OFFLINE WITH ROLLBACK IMMEDIATE
+Step2: Physically move the .ndf files to R:\MSSQLData
+Step3:  Updated the file paths in SQL Server
+            ALTER DATABASE CREDITDATAMART  
+           MODIFY FILE (NAME = '<logical_file_name>', FILENAME = 'R:\MSSQLData\<file_name>.ndf');
+Step4: Online the CreditDataMartDB
+             ALTER DATABASE CREDITDATAMART SET ONLINE
