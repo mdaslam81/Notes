@@ -1,0 +1,59 @@
+✅ Method 1: sys.dm_db_partition_stats + sys.indexes
+This shows row and page count per partition.
+
+sql
+Copy
+Edit
+SELECT 
+    i.name AS index_name,
+    p.partition_number,
+    SUM(ps.used_page_count) * 8 AS used_space_kb,
+    SUM(ps.reserved_page_count) * 8 AS reserved_space_kb,
+    SUM(ps.row_count) AS total_rows
+FROM sys.dm_db_partition_stats ps
+JOIN sys.partitions p
+    ON ps.partition_id = p.partition_id
+JOIN sys.indexes i
+    ON p.object_id = i.object_id AND p.index_id = i.index_id
+WHERE i.object_id = OBJECT_ID('dbo.YourTable')  -- replace with your table
+  AND i.type = 1 -- clustered index
+GROUP BY i.name, p.partition_number
+ORDER BY p.partition_number;
+✅ Method 2: sp_spaceused (for entire table/index)
+sql
+Copy
+Edit
+-- For the whole table
+EXEC sp_spaceused 'dbo.YourTable';
+
+-- For a specific index (e.g., clustered)
+SELECT 
+    OBJECT_NAME(i.object_id) AS TableName,
+    i.name AS IndexName,
+    i.type_desc,
+    SUM(a.used_pages) * 8 AS UsedSpaceKB
+FROM sys.indexes i
+JOIN sys.partitions p ON i.object_id = p.object_id AND i.index_id = p.index_id
+JOIN sys.allocation_units a ON p.partition_id = a.container_id
+WHERE i.object_id = OBJECT_ID('dbo.YourTable')
+  AND i.type = 1  -- clustered
+GROUP BY i.object_id, i.name, i.type_desc;
+✅ Method 3: Per Partition — sys.allocation_units + sys.partitions
+To get space per partition, include filegroup or partition_number grouping.
+
+sql
+Copy
+Edit
+SELECT 
+    p.partition_number,
+    fg.name AS filegroup_name,
+    SUM(a.total_pages) * 8 AS total_kb,
+    SUM(a.used_pages) * 8 AS used_kb
+FROM sys.partitions p
+JOIN sys.allocation_units a ON p.partition_id = a.container_id
+JOIN sys.indexes i ON p.object_id = i.object_id AND p.index_id = i.index_id
+JOIN sys.filegroups fg ON i.data_space_id = fg.data_space_id
+WHERE p.object_id = OBJECT_ID('dbo.YourTable')
+  AND i.type = 1 -- clustered index
+GROUP BY p.partition_number, fg.name
+ORDER BY p.partition_number;
