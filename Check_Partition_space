@@ -57,3 +57,65 @@ WHERE p.object_id = OBJECT_ID('dbo.YourTable')
   AND i.type = 1 -- clustered index
 GROUP BY p.partition_number, fg.name
 ORDER BY p.partition_number;
+
+~~~~~~~~~~~~~~~~~~~
+
+
+✅ 1. List All Indexes (Clustered & Non-Clustered) on a Table
+sql
+Copy
+Edit
+SELECT 
+    i.name AS index_name,
+    i.type_desc AS index_type,
+    i.index_id,
+    i.data_space_id,
+    ps.name AS partition_scheme,
+    pf.name AS partition_function
+FROM sys.indexes i
+LEFT JOIN sys.data_spaces ds ON i.data_space_id = ds.data_space_id
+LEFT JOIN sys.partition_schemes ps ON ds.data_space_id = ps.data_space_id
+LEFT JOIN sys.partition_functions pf ON ps.function_id = pf.function_id
+WHERE i.object_id = OBJECT_ID('dbo.YourTable');  -- Replace with your table name
+✅ 2. See Partition-Level Info for Each Index
+sql
+Copy
+Edit
+SELECT 
+    i.name AS index_name,
+    i.type_desc AS index_type,
+    p.partition_number,
+    p.rows,
+    au.total_pages * 8 AS total_kb,
+    au.used_pages * 8 AS used_kb
+FROM sys.indexes i
+JOIN sys.partitions p ON i.object_id = p.object_id AND i.index_id = p.index_id
+JOIN sys.allocation_units au ON p.partition_id = au.container_id
+WHERE i.object_id = OBJECT_ID('dbo.YourTable')  -- Replace as needed
+ORDER BY i.index_id, p.partition_number;
+This shows:
+
+Partition numbers
+
+Row count
+
+Space used per index and partition
+
+✅ 3. List Index Type and Whether It's Partitioned
+sql
+Copy
+Edit
+SELECT 
+    i.name AS index_name,
+    i.type_desc AS index_type,
+    ds.name AS data_space_name,
+    CASE 
+        WHEN ps.name IS NOT NULL THEN 'Yes'
+        ELSE 'No'
+    END AS is_partitioned
+FROM sys.indexes i
+JOIN sys.objects o ON i.object_id = o.object_id
+JOIN sys.data_spaces ds ON i.data_space_id = ds.data_space_id
+LEFT JOIN sys.partition_schemes ps ON ds.data_space_id = ps.data_space_id
+WHERE o.name = 'YourTable'  -- Replace with your table
+  AND o.type = 'U';  -- user table
